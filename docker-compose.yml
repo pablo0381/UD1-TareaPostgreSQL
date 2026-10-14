@@ -1,0 +1,39 @@
+services:
+  db:
+    image: postgres:latest
+    container_name: postgresSQL_local
+    restart: always
+    environment:
+      POSTGRES_USER: postgres_admin
+      POSTGRES_DB: asir_db
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgreSQL_postgres_admin_password
+    secrets:
+      - postgreSQL_postgres_admin_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+      - ./config/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - postgres_logs:/var/log/postgresql
+    command: ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres_admin -d asir_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - postgres_net
+
+volumes:
+  postgres_data:
+    driver: local
+  postgres_logs:
+    driver: local
+
+networks:
+  postgres_net:
+    driver: bridge
+
+secrets:
+  postgreSQL_postgres_admin_password:
+    file: ./seguridad/postgreSQL_postgres_admin_password.txt
